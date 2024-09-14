@@ -1,0 +1,105 @@
+name: GoogleJavaFormat/ESLint/Prettier Enforcement
+
+on:
+  pull_request:
+    branches:
+      - '**'
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  format-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache google-java-format
+        id: cache-google-java-format
+        uses: actions/cache@v4
+        with:
+          path: ./backend/google-java-format.jar
+          key: google-java-format-1.11.0
+
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: ./frontend/node_modules
+          key: node-modules-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            node-modules-
+
+      - name: Download google-java-format if not cached
+        if: steps.cache-google-java-format.outputs.cache-hit != 'true'
+        run: |
+          curl -L -o ./backend/google-java-format.jar "https://github.com/google/google-java-format/releases/download/v1.11.0/google-java-format-1.11.0-all-deps.jar"
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Update cache after dependencies are installed
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ./frontend/node_modules
+          key: node-modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Format Java files
+        working-directory: ./backend
+        run: |
+          java --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
+               --add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED \
+               --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
+               --add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
+               --add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
+               --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED \
+               -jar google-java-format.jar --replace $(find . -name '*.java')
+
+      - name: Run ESLint and Prettier
+        run: |
+          npm run lint
+          npx prettier --write .
+        working-directory: ./frontend
+
+      - name: Commit and push changes if any
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          branchName=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$branchName" = "HEAD" ]; then
+            branchName="${{ github.head_ref }}"
+            git checkout $branchName
+          fi
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/ frontend/
+          git commit -m "style: apply formatting and linting" || echo "No changes to commit"
+          git pull --rebase origin $branchName
+          git push origin $branchName
+
+      - name: Fail if there are uncommitted changes
+        run: |
+          git diff-index --quiet HEAD || exit 1

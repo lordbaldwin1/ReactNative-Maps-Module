@@ -1,0 +1,5 @@
+# Note: There are frontend/backend-specific gitignores
+# in subdirectories that contain their own ignoring rules.
+
+### VS Code ###
+**/.vscode/
