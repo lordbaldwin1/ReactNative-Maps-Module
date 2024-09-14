@@ -1,7 +1,7 @@
 # The Official Team Sparkle Motion Repository 🎉
  Mobile Version of Maps Module (React Native)
 
-# Screenshots of Application
+## Screenshots of Application
 
 ## Overview
 ![Development_Overview_JUNE25](https://github.com/user-attachments/assets/2d282536-09ab-4b40-abb0-4f2fca040cf6)
