@@ -1,7 +1,7 @@
 # The Official Team Sparkle Motion Repository 🎉
  Mobile Version of Maps Module (React Native)
 
- This version of our maps module is less polished than the React version. We switched over to the development of a web application partway through development.
+ This version of our maps module is less polished than the React version. We switched over to the development of a web application partway through the project.
 
 ## Screenshots of Application
 
