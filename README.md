@@ -3,7 +3,7 @@
 
  This version of our maps module is less polished than the React version. We switched over to the development of a web application partway through the project.
 
-## Screenshots of Application
+## Screenshots of Application:
 
 ## Overview
 ![Development_Overview_JUNE25](https://github.com/user-attachments/assets/2d282536-09ab-4b40-abb0-4f2fca040cf6)
